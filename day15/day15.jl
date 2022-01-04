@@ -61,5 +61,74 @@ end
 
 indices = Vector{Tuple{Int64, Int64}}()
 index = (1, 1)
-visited = 
+visited =
 bfs!(maze, indices, index)
+
+
+# implement dijkstra's algorithm
+function dijkstra(maze::Matrix{Int64})
+
+    m, n = size(maze)
+
+    # create the coord set
+    Q = Set([(i, j) for i in 1:m for j in 1:n])
+
+    # dist and prev
+    dist = Dict{Tuple{Int64, Int64}, Int64}()
+    prev = Dict{Tuple{Int64, Int64}, Tuple{Int64, Int64}}()
+    for q in Q
+        dist[q] = typemax(Int64)
+        prev[q] = (0, 0)
+    end
+
+    # set source = 0
+    source, target = (1, 1), (m, n)
+    dist[source] = 0
+
+    while length(Q) > 0
+
+        # find the coord in Q with smallest dist
+        u, d = (0, 0), typemax(Int64)
+        for q in Q
+            if dist[q] < d
+                d = dist[q]
+                u = q
+            end
+        end
+        @assert d < typemax(Int64)
+
+        delete!(Q, u)
+        u == target ? break : nothing
+
+        # get neihbors that's in Q
+        neighbors = intersect(Q, Set([(u[1]-1, u[2]), (u[1], u[2]-1), (u[1]+1, u[2]), (u[1], u[2]+1)]))
+        for v in neighbors
+            alt = dist[u] + maze[v[1], v[2]]
+            if alt < dist[v]
+                dist[v] = alt
+                prev[v] = u
+            end
+        end
+    end
+    return dist, prev
+end
+
+
+
+@elapsed dist, prev = dijkstra(maze)
+ans1 = dist[(100, 100)]
+println(ans1)
+
+
+# part 2
+# construct the full map
+maze2 = repeat(maze, outer=(5, 5))
+for i in 1:5 for j in 1:5
+    maze2[100*(i-1)+1:100*i, 100*(j-1)+1:100*j] .+= i + j - 2
+end end
+maze2 .%= 9
+maze2[maze2 .== 0] .= 9
+
+@elapsed dist, prev = dijkstra(maze2)
+ans2 = dist[(500, 500)]
+println(ans2)
